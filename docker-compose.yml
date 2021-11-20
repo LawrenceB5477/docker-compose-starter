@@ -19,14 +19,64 @@ services:
       - redis_data_container:/bitnami/redis/data
   postgres:
     image: postgres
-    environment: 
+    environment:
       POSTGRES_PASSWORD: test
     ports:
       - "5432:5432"
     volumes:
       - postgresdata:/var/lib/postgresql/data
+  mysql_test:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: my_secret_password
+      MYSQL_DATABASE: app_db
+      MYSQL_USER: db_user
+      MYSQL_PASSWORD: db_user_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysqldata:/var/lib/mysql
+  rabbitmq:
+    image: bitnami/rabbitmq:3.8
+    environment:
+      RABBITMQ_PASSWORD: password
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+      - '61613'
+    volumes:
+      - rabbitdata:/bitnami
+  elastic_search:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.15.2
+    container_name: elastic
+    environment:
+      - node.name=es01
+      - cluster.initial_master_nodes=es01
+    volumes:
+      - elastic_search:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+    networks:
+      - elastic
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.15.2
+    container_name: kib
+    ports:
+      - 5601:5601
+    environment:
+      ELASTICSEARCH_URL: http://elastic:9200
+      ELASTICSEARCH_HOSTS: '["http://elastic:9200"]'
+    networks:
+      - elastic
 
 volumes:
   mongodb_data_container:
   redis_data_container:
   postgresdata:
+  rabbitdata:
+  elastic_search:
+  mysqldata:
+
+networks:
+  elastic:
+    driver: bridge
